@@ -20,6 +20,8 @@ export function Layout({ children }: LayoutProps) {
               <div className="hidden md:flex items-center gap-6">
                 <NavLink href="/">Learn</NavLink>
                 <NavLink href="/reference">Reference</NavLink>
+                <NavLink href="/signals">Signals</NavLink>
+                <NavLink href="/strace">strace</NavLink>
                 <NavLink href="/exercises">Exercises</NavLink>
               </div>
             </div>
