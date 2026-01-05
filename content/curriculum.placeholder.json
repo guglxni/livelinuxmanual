@@ -1,0 +1,9 @@
+{
+  "source": "<path-to-pdf>",
+  "extractedAt": "<timestamp>",
+  "chapters": [
+    { "title": "Preface", "summary": "Overview of Linux system programming and book goals" },
+    { "title": "Chapter 1: Introduction", "summary": "System calls, processes, and program structure" },
+    { "title": "Chapter 2: File I/O", "summary": "open, read, write, file descriptors, permissions" }
+  ]
+}

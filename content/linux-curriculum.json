@@ -1,0 +1,540 @@
+{
+  "title": "Linux System Programming Essentials",
+  "author": "Michael Kerrisk",
+  "source": "man7.org",
+  "chapters": [
+    {
+      "id": 1,
+      "title": "Course Introduction",
+      "sections": [
+        {
+          "id": "1.1",
+          "title": "Course Overview",
+          "topics": [
+            "Prerequisites: C reading knowledge, Linux/UNIX basics, make(1)",
+            "Course goals: understanding kernel-to-userspace API",
+            "System calls, C library functions, /proc interfaces",
+            "Lab sessions and pair programming"
+          ]
+        },
+        {
+          "id": "1.2",
+          "title": "Course Materials and Resources",
+          "topics": [
+            "The Linux Programming Interface (TLPI) reference",
+            "POSIX standards: SUSv3, SUSv4, SUSv5",
+            "Manual pages: sections 2, 3, 7",
+            "Source code tarball and Git repository"
+          ]
+        },
+        {
+          "id": "1.3",
+          "title": "Common Abbreviations",
+          "topics": [
+            "FD: file descriptor",
+            "PID/PPID: process ID / parent process ID",
+            "UID/GID: user ID / group ID",
+            "IPC: interprocess communication",
+            "EOF: end of file",
+            "FS: filesystem"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Fundamental Concepts",
+      "sections": [
+        {
+          "id": "2.1",
+          "title": "Error Handling",
+          "topics": [
+            "System call return values: -1 indicates failure",
+            "errno global variable and thread safety",
+            "Error constants: EPERM, ENOENT, ESRCH, etc.",
+            "perror() and strerror() functions",
+            "Always check return status before inspecting errno"
+          ],
+          "codeExamples": [
+            {
+              "title": "Basic error checking",
+              "code": "fd = open(pathname, O_RDONLY);\nif (fd == -1) {\n    perror(\"open\");\n    exit(EXIT_FAILURE);\n}"
+            },
+            {
+              "title": "Checking specific errors",
+              "code": "cnt = read(fd, buf, numbytes);\nif (cnt == -1) {\n    if (errno == EINTR)\n        fprintf(stderr, \"read() interrupted by signal\\n\");\n    else if (errno == EBADF)\n        fprintf(stderr, \"bad file descriptor\\n\");\n}"
+            }
+          ]
+        },
+        {
+          "id": "2.2",
+          "title": "System Data Types",
+          "topics": [
+            "POSIX portable types: pid_t, uid_t, gid_t, off_t",
+            "size_t and ssize_t for sizes",
+            "time_t for timestamps",
+            "Printing system types: cast to long for printf",
+            "off_t typically requires long long"
+          ],
+          "codeExamples": [
+            {
+              "title": "Printing system data types",
+              "code": "printf(\"My PID is: %ld\\n\", (long)getpid());\nprintf(\"Offset is %lld\\n\", (long long)lseek(fd, 0, SEEK_CUR));"
+            }
+          ]
+        },
+        {
+          "id": "2.3",
+          "title": "Code Examples and Error Functions",
+          "topics": [
+            "tlpi_hdr.h common header file",
+            "errExit(): print error and terminate",
+            "errMsg(): print error without terminating",
+            "fatal(): print message and terminate",
+            "Building with libtlpi.a library"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "File I/O",
+      "sections": [
+        {
+          "id": "3.1",
+          "title": "File I/O Overview",
+          "topics": [
+            "Everything is a file descriptor",
+            "Regular files vs generic file term",
+            "System calls vs stdio library functions",
+            "File descriptors: nonnegative integers",
+            "Standard FDs: 0=stdin, 1=stdout, 2=stderr"
+          ],
+          "diagram": {
+            "type": "table",
+            "content": "FD | Purpose | POSIX Name | stdio\n0 | stdin | STDIN_FILENO | stdin\n1 | stdout | STDOUT_FILENO | stdout\n2 | stderr | STDERR_FILENO | stderr"
+          }
+        },
+        {
+          "id": "3.2",
+          "title": "open(), read(), write(), close()",
+          "topics": [
+            "open(): returns file descriptor, flags argument",
+            "Access modes: O_RDONLY, O_WRONLY, O_RDWR",
+            "Creation flags: O_CREAT, O_EXCL, O_TRUNC",
+            "Status flags: O_APPEND, O_NONBLOCK",
+            "read(): returns bytes read, 0 for EOF, -1 for error",
+            "write(): returns bytes written, may be partial",
+            "close(): always releases FD even on error"
+          ],
+          "codeExamples": [
+            {
+              "title": "Opening files",
+              "code": "// Read only\nfd = open(\"script.txt\", O_RDONLY);\n\n// Create exclusively\nfd = open(\"myfile.txt\", O_CREAT | O_EXCL | O_RDWR,\n          S_IRUSR | S_IWUSR);"
+            },
+            {
+              "title": "File copy example",
+              "code": "#define BUF_SIZE 1024\nchar buf[BUF_SIZE];\nint infd = open(argv[1], O_RDONLY);\nint outfd = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC,\n                S_IRUSR | S_IWUSR | S_IRGRP);\nssize_t nread;\nwhile ((nread = read(infd, buf, BUF_SIZE)) > 0)\n    write(outfd, buf, nread);\nclose(infd);\nclose(outfd);"
+            }
+          ],
+          "apiSummary": [
+            "int open(const char *pathname, int flags, ... /* mode_t mode */);",
+            "ssize_t read(int fd, void *buffer, size_t count);",
+            "ssize_t write(int fd, const void *buffer, size_t count);",
+            "int close(int fd);"
+          ]
+        }
+      ],
+      "exercises": [
+        {
+          "id": "3.4.1",
+          "title": "Implement tee command",
+          "description": "Using open(), close(), read(), and write(), implement tee [-a] file. Write copy of stdin to stdout and to file. Support -a for append mode."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Processes",
+      "sections": [
+        {
+          "id": "4.1",
+          "title": "Process IDs",
+          "topics": [
+            "Process = running instance of a program",
+            "PID: unique positive integer identifier",
+            "getpid() returns caller's PID",
+            "getppid() returns parent's PID",
+            "Elevator algorithm for PID allocation",
+            "Maximum PID: 32767 (adjustable via /proc/sys/kernel/pid_max)"
+          ]
+        },
+        {
+          "id": "4.2",
+          "title": "Process Memory Layout",
+          "topics": [
+            "Text segment: read-only machine instructions",
+            "Initialized data: explicit global/static variables",
+            "Uninitialized data (bss): zeroed globals/statics",
+            "Stack: local variables, call linkage",
+            "Heap: dynamic allocation (malloc/free)"
+          ],
+          "diagram": {
+            "type": "tree",
+            "content": "Process Memory\n  High Address\n    argv, environ\n    Stack (grows down)\n    (unallocated)\n    Heap (grows up)\n    Uninitialized data\n    Initialized data\n    Text (code)\n  Low Address"
+          }
+        },
+        {
+          "id": "4.3",
+          "title": "Command-line Arguments",
+          "topics": [
+            "argc: argument count",
+            "argv: array of string pointers",
+            "argv[0]: program name",
+            "argv[argc] == NULL"
+          ]
+        },
+        {
+          "id": "4.4",
+          "title": "Environment List",
+          "topics": [
+            "Environment variables: name=value strings",
+            "extern char **environ global variable",
+            "getenv(), putenv(), setenv(), unsetenv()",
+            "Child inherits copy of parent's environment",
+            "/proc/PID/environ to view process environment"
+          ]
+        },
+        {
+          "id": "4.5",
+          "title": "The /proc Filesystem",
+          "topics": [
+            "Pseudofilesystem exposing kernel information",
+            "/proc/PID/ directories for each process",
+            "cmdline, cwd, environ, fd, maps, status",
+            "/proc/sys/ for kernel parameters",
+            "Many files writable to update settings"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Signals",
+      "sections": [
+        {
+          "id": "5.1",
+          "title": "Overview of Signals",
+          "topics": [
+            "Software interrupts for event notification",
+            "Generated by kernel or other processes",
+            "Common signals: SIGINT, SIGTERM, SIGKILL, SIGSEGV",
+            "Signal delivery: pending until process scheduled",
+            "Default actions: terminate, core dump, ignore, stop"
+          ]
+        },
+        {
+          "id": "5.2",
+          "title": "Signal Dispositions",
+          "topics": [
+            "Three choices: ignore, handle, default",
+            "Cannot change SIGKILL or SIGSTOP",
+            "sigaction() to change disposition",
+            "sa_handler: SIG_IGN, SIG_DFL, or handler address",
+            "sa_mask: signals blocked during handler",
+            "sa_flags: behavior modifiers"
+          ],
+          "codeExamples": [
+            {
+              "title": "Ignoring a signal",
+              "code": "struct sigaction sa;\nsa.sa_handler = SIG_IGN;\nsa.sa_flags = 0;\nsigemptyset(&sa.sa_mask);\nsigaction(SIGINT, &sa, NULL);"
+            }
+          ]
+        },
+        {
+          "id": "5.3",
+          "title": "Signal-related Functions",
+          "topics": [
+            "strsignal(): get signal description string",
+            "pause(): block until signal caught",
+            "sigprocmask(): modify signal mask",
+            "sigpending(): discover pending signals"
+          ]
+        },
+        {
+          "id": "5.4",
+          "title": "Signal Handlers",
+          "topics": [
+            "Function called when signal delivered",
+            "Receives signal number as argument",
+            "Returns void",
+            "Interrupts main program flow",
+            "Execution resumes at interruption point"
+          ],
+          "codeExamples": [
+            {
+              "title": "Simple signal handler",
+              "code": "static void sigHandler(int sig) {\n    printf(\"Ouch!\\n\");\n}\n\nint main() {\n    struct sigaction sa;\n    sa.sa_flags = 0;\n    sa.sa_handler = sigHandler;\n    sigemptyset(&sa.sa_mask);\n    sigaction(SIGINT, &sa, NULL);\n    for (;;) pause();\n}"
+            }
+          ]
+        },
+        {
+          "id": "5.6",
+          "title": "Signal Sets and Signal Mask",
+          "topics": [
+            "sigset_t: data structure for multiple signals",
+            "sigemptyset(), sigfillset(): initialize sets",
+            "sigaddset(), sigdelset(): modify sets",
+            "sigismember(): test membership",
+            "Signal mask: blocked signals per process/thread",
+            "Signals not queued: multiple generations = one delivery"
+          ],
+          "codeExamples": [
+            {
+              "title": "Temporarily blocking a signal",
+              "code": "sigset_t blocking, prev;\nsigemptyset(&blocking);\nsigaddset(&blocking, SIGINT);\nsigprocmask(SIG_BLOCK, &blocking, &prev);\n/* ... code with SIGINT blocked ... */\nsigprocmask(SIG_SETMASK, &prev, NULL);"
+            }
+          ]
+        },
+        {
+          "id": "5.10",
+          "title": "Designing Signal Handlers",
+          "topics": [
+            "Keep handlers simple to avoid race conditions",
+            "Set global flag and return pattern",
+            "Clean up and terminate pattern",
+            "Nonlocal goto with sigsetjmp/siglongjmp",
+            "Signals not queued: handle multiple events",
+            "Read signal-safety(7) manual page"
+          ]
+        }
+      ],
+      "apiSummary": [
+        "int sigaction(int sig, const struct sigaction *act, struct sigaction *oldact);",
+        "char *strsignal(int sig);",
+        "int pause(void);",
+        "int sigemptyset(sigset_t *set);",
+        "int sigfillset(sigset_t *set);",
+        "int sigaddset(sigset_t *set, int sig);",
+        "int sigdelset(sigset_t *set, int sig);",
+        "int sigismember(const sigset_t *set, int sig);",
+        "int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);",
+        "int sigpending(sigset_t *set);"
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Process Lifecycle",
+      "sections": [
+        {
+          "id": "6.1",
+          "title": "Introduction",
+          "topics": [
+            "Four key system calls: fork, exit, wait, execve",
+            "fork(): create child process",
+            "exit(): terminate calling process",
+            "wait(): wait for child termination",
+            "execve(): execute new program"
+          ],
+          "diagram": {
+            "type": "sequence",
+            "content": "Parent -> fork() -> Child\nChild -> execve(B) -> Child running B\nChild -> exit(status)\nParent -> wait(&wstatus) -> receives status"
+          }
+        },
+        {
+          "id": "6.2",
+          "title": "Creating a Process: fork()",
+          "topics": [
+            "Creates near-exact duplicate of caller",
+            "Copy-on-write for efficiency",
+            "Returns PID of child in parent, 0 in child",
+            "Returns -1 on failure",
+            "Child gets own copies of stack, data, heap"
+          ],
+          "codeExamples": [
+            {
+              "title": "Using fork()",
+              "code": "pid_t pid = fork();\nif (pid == -1) {\n    /* Handle error */\n} else if (pid == 0) {\n    /* Child code */\n} else {\n    /* Parent code */\n}"
+            }
+          ]
+        },
+        {
+          "id": "6.4",
+          "title": "Process Termination",
+          "topics": [
+            "_exit(2): system call, immediate termination",
+            "exit(3): library function, calls exit handlers",
+            "Exit status: lowest 8 bits, 0=success",
+            "EXIT_SUCCESS and EXIT_FAILURE constants",
+            "return n in main() equivalent to exit(n)",
+            "Kernel cleanup: close FDs, release locks, unmap memory"
+          ]
+        },
+        {
+          "id": "6.5",
+          "title": "Monitoring Child Processes",
+          "topics": [
+            "waitpid(): wait for specific child or any child",
+            "wait(): simpler API, waits for any child",
+            "wstatus: encodes termination reason",
+            "WIFEXITED, WEXITSTATUS: normal exit",
+            "WIFSIGNALED, WTERMSIG: killed by signal",
+            "WIFSTOPPED, WSTOPSIG: stopped by signal",
+            "WNOHANG: nonblocking wait"
+          ],
+          "codeExamples": [
+            {
+              "title": "Waiting for all children",
+              "code": "for (;;) {\n    childPid = waitpid(-1, NULL, 0);\n    if (childPid == -1) {\n        if (errno == ECHILD) {\n            printf(\"No more children!\\n\");\n            break;\n        }\n        errExit(\"waitpid\");\n    }\n    printf(\"Child %ld terminated\\n\", (long)childPid);\n}"
+            }
+          ]
+        },
+        {
+          "id": "6.6",
+          "title": "Orphans and Zombies",
+          "topics": [
+            "Orphan: child outlives parent, adopted by init",
+            "Zombie: terminated child not yet waited for",
+            "Zombie retains PID and status until reaped",
+            "Cannot kill zombies with signals",
+            "Long-lived processes must reap zombies"
+          ]
+        },
+        {
+          "id": "6.9",
+          "title": "The SIGCHLD Signal",
+          "topics": [
+            "Generated when child terminates",
+            "Ignored by default",
+            "Handler should loop with WNOHANG",
+            "Handle multiple terminated children",
+            "SA_NOCLDSTOP to ignore stop/continue"
+          ],
+          "codeExamples": [
+            {
+              "title": "SIGCHLD handler",
+              "code": "void grimReaper(int sig) {\n    int savedErrno = errno;\n    while (waitpid(-1, NULL, WNOHANG) > 0)\n        continue;\n    errno = savedErrno;\n}"
+            }
+          ]
+        },
+        {
+          "id": "6.10",
+          "title": "Executing Programs: execve()",
+          "topics": [
+            "Loads new program into process memory",
+            "pathname: absolute or relative path",
+            "argv: command-line arguments array",
+            "envp: environment variables array",
+            "Successful exec never returns",
+            "PID unchanged after exec"
+          ],
+          "codeExamples": [
+            {
+              "title": "Using execve()",
+              "code": "extern char **environ;\nchar *argv[] = {\"ls\", \"-l\", NULL};\nexecve(\"/bin/ls\", argv, environ);\nperror(\"execve\");  // Only reached on error\nexit(EXIT_FAILURE);"
+            }
+          ]
+        },
+        {
+          "id": "6.12",
+          "title": "The exec() Library Functions",
+          "topics": [
+            "execl, execle, execlp: list arguments",
+            "execv, execve, execvp, execvpe: vector arguments",
+            "p suffix: search PATH for executable",
+            "e suffix: specify environment",
+            "All are wrappers around execve()"
+          ]
+        }
+      ],
+      "apiSummary": [
+        "pid_t fork(void);",
+        "void _exit(int status);",
+        "void exit(int status);",
+        "pid_t waitpid(pid_t pid, int *wstatus, int options);",
+        "pid_t wait(int *wstatus);",
+        "int execve(const char *pathname, char *const argv[], char *const envp[]);"
+      ]
+    },
+    {
+      "id": 7,
+      "title": "System Call Tracing with strace",
+      "sections": [
+        {
+          "id": "7.1",
+          "title": "Getting Started",
+          "topics": [
+            "strace traces system calls via ptrace(2)",
+            "Symbolic output: names, signals, structures",
+            "strace -o file: output to file",
+            "Shows syscall name, arguments, return value",
+            "errno shown symbolically on failure"
+          ]
+        },
+        {
+          "id": "7.2",
+          "title": "Tracing Child Processes",
+          "topics": [
+            "-f option: trace forked children",
+            "Each line prefixed with PID",
+            "-p PID: attach to running process",
+            "Can trace multiple processes"
+          ]
+        },
+        {
+          "id": "7.4",
+          "title": "Filtering strace Output",
+          "topics": [
+            "-e trace=syscall: trace specific syscalls",
+            "-e trace=%file: file-related syscalls",
+            "-e trace=%process: process management",
+            "-e trace=%network: network syscalls",
+            "-P pathname: trace file access",
+            "-y: show pathnames for FDs"
+          ]
+        },
+        {
+          "id": "7.5",
+          "title": "System Call Tampering",
+          "topics": [
+            "-e inject: modify syscall behavior",
+            "error=errnum: inject error return",
+            "retval=value: inject success return",
+            "delay_enter/delay_exit: add delays",
+            "when=N: tamper with Nth invocation",
+            "Useful for error injection testing"
+          ]
+        },
+        {
+          "id": "7.6",
+          "title": "Further strace Options",
+          "topics": [
+            "-c: summary of syscall counts and times",
+            "-k: print stack trace after each syscall",
+            "-v: verbose, don't abbreviate",
+            "-s strsize: max string length to display",
+            "-t, -tt: show timestamps",
+            "-T: show time spent in syscall"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Wrapup",
+      "sections": [
+        {
+          "id": "8.1",
+          "title": "Summary and Resources",
+          "topics": [
+            "Course covered kernel-userspace API fundamentals",
+            "File I/O, processes, signals, process lifecycle",
+            "strace for debugging and understanding",
+            "Reference: The Linux Programming Interface",
+            "man7.org for manual pages and updates"
+          ]
+        }
+      ]
+    }
+  ]
+}
