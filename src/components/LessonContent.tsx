@@ -21,10 +21,14 @@ interface LessonContentProps {
 export function LessonContent({ chapterId, chapterTitle, section }: LessonContentProps) {
   // Get relevant diagram based on section
   const getDiagram = () => {
-    if (section.id === '4.2') return DIAGRAMS.memoryLayout;
-    if (section.id === '6.1' || section.id === '6.2') return DIAGRAMS.forkExec;
-    if (section.id === '5.1' || section.id === '5.2') return DIAGRAMS.signalFlow;
-    if (section.id === '3.1') return DIAGRAMS.fdTable;
+    if (section.id === '4.2') return { content: DIAGRAMS.memoryLayout, title: 'Process Memory Layout' };
+    if (section.id === '6.1' || section.id === '6.2') return { content: DIAGRAMS.forkExec, title: 'Fork/Exec Lifecycle' };
+    if (section.id === '5.1' || section.id === '5.2') return { content: DIAGRAMS.signalFlow, title: 'Signal Flow' };
+    if (section.id === '3.1') return { content: DIAGRAMS.fdTable, title: 'File Descriptor Table' };
+    if (section.id === '3.2') return { content: DIAGRAMS.openFlags, title: 'open() Flags' };
+    if (section.id === '2.1') return { content: DIAGRAMS.errnoFlow, title: 'Error Handling Flow' };
+    if (section.id === '6.5') return { content: DIAGRAMS.waitStatus, title: 'Wait Status Encoding' };
+    if (section.id === '7.1') return { content: DIAGRAMS.straceOutput, title: 'strace Output Format' };
     return null;
   };
 
@@ -71,8 +75,8 @@ export function LessonContent({ chapterId, chapterTitle, section }: LessonConten
       {/* Diagram */}
       {diagram && (
         <AsciiDiagram
-          content={diagram}
-          title={section.title + ' - Visual'}
+          content={diagram.content}
+          title={diagram.title}
           accent="yellow"
         />
       )}

@@ -61,6 +61,10 @@ const DIAGRAMS_LIST = [
   { name: 'Fork/Exec Lifecycle', diagram: DIAGRAMS.forkExec },
   { name: 'Signal Flow', diagram: DIAGRAMS.signalFlow },
   { name: 'File Descriptor Table', diagram: DIAGRAMS.fdTable },
+  { name: 'Wait Status Encoding', diagram: DIAGRAMS.waitStatus },
+  { name: 'Error Handling Flow', diagram: DIAGRAMS.errnoFlow },
+  { name: 'open() Flags', diagram: DIAGRAMS.openFlags },
+  { name: 'strace Output', diagram: DIAGRAMS.straceOutput },
 ];
 
 export default function Reference() {
