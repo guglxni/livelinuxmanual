@@ -1,217 +1,124 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { CodeBlock } from '../components/CodeBlock';
+import { markSectionComplete, getProgress } from '../lib/progress';
+import knowledgeBase from '../../content/knowledge-base.json';
 
-const EXERCISES = [
-  {
-    id: 1,
-    chapter: 3,
-    title: 'Implement tee command',
-    difficulty: 'Beginner',
-    description: 'Using open(), close(), read(), and write(), implement the tee [-a] file command. This command writes a copy of its standard input to standard output and to file.',
-    requirements: [
-      'If file does not exist, create it',
-      'If file exists, truncate to zero length (O_TRUNC)',
-      'Support -a option for append mode (O_APPEND)',
-      'Handle errors appropriately',
-    ],
-    hints: [
-      'Standard input and output are automatically opened (FD 0 and 1)',
-      'Use getopt(3) for command-line option parsing',
-      'Remember to check return values of all system calls',
-    ],
-    template: `#include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#define BUF_SIZE 1024
-
-int main(int argc, char *argv[]) {
-    int opt, append = 0;
-    
-    // FIXME: Parse -a option using getopt()
-    
-    if (optind >= argc) {
-        fprintf(stderr, "Usage: %s [-a] file\\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
-    
-    // FIXME: Open output file with appropriate flags
-    int flags = O_WRONLY | O_CREAT;
-    // Add O_APPEND or O_TRUNC based on -a flag
-    
-    int fd = open(argv[optind], flags, 0644);
-    if (fd == -1) {
-        perror("open");
-        exit(EXIT_FAILURE);
-    }
-    
-    // FIXME: Read from stdin, write to stdout and file
-    char buf[BUF_SIZE];
-    ssize_t nread;
-    
-    // Your code here...
-    
-    close(fd);
-    return 0;
-}`,
-  },
-  {
-    id: 2,
-    chapter: 6,
-    title: 'Fork and variable test',
-    difficulty: 'Beginner',
-    description: 'Write a program that uses fork() to create a child process and demonstrates that the child can modify its copy of a variable without affecting the parent.',
-    requirements: [
-      'Create a local variable in main()',
-      'Fork a child process',
-      'Child modifies the variable and prints it',
-      'Parent waits, then prints its copy of the variable',
-    ],
-    hints: [
-      'Use sleep() to ensure child executes first',
-      'Both processes should print their PID',
-      'The values should be different after child modifies its copy',
-    ],
-    template: `#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/wait.h>
-
-int main(void) {
-    int localVar = 100;
-    
-    printf("Before fork: localVar = %d\\n", localVar);
-    
-    pid_t pid = fork();
-    
-    if (pid == -1) {
-        perror("fork");
-        exit(EXIT_FAILURE);
-    }
-    
-    if (pid == 0) {
-        // Child process
-        // FIXME: Modify localVar and print PID and value
-    } else {
-        // Parent process
-        // FIXME: Wait for child, then print PID and value
-    }
-    
-    return 0;
-}`,
-  },
-  {
-    id: 3,
-    chapter: 5,
-    title: 'Signal handler experiment',
-    difficulty: 'Intermediate',
-    description: 'Write a program that blocks all signals except SIGINT, establishes a handler for SIGINT, and displays pending signals when the handler returns.',
-    requirements: [
-      'Block all signals except SIGINT using sigprocmask()',
-      'Establish SIGINT handler using sigaction()',
-      'Call pause() to wait for signal',
-      'After pause() returns, display all pending signals',
-    ],
-    hints: [
-      'Use sigfillset() then sigdelset() to create the mask',
-      'Iterate through signals 1 to NSIG-1 to check pending',
-      'Use strsignal() to get signal descriptions',
-    ],
-    template: `#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-static void sigint_handler(int sig) {
-    // Handler just returns
+interface Exercise {
+  id: string;
+  chapter: number;
+  title: string;
+  difficulty: string;
+  description: string;
+  requirements: string[];
+  hints: string[];
+  template: string;
+  concepts: string[];
+  estimatedMinutes: number;
+  extensions?: string[];
 }
 
-int main(void) {
-    struct sigaction sa;
-    sigset_t block_set, pending;
-    
-    // FIXME: Set up signal mask to block all except SIGINT
-    
-    // FIXME: Establish SIGINT handler
-    
-    printf("PID: %ld\\n", (long)getpid());
-    printf("Send signals, then press Ctrl-C...\\n");
-    
-    pause();  // Wait for SIGINT
-    
-    printf("\\nPending signals:\\n");
-    
-    // FIXME: Get and display pending signals
-    
-    return 0;
-}`,
-  },
-  {
-    id: 4,
-    chapter: 6,
-    title: 'Simple shell',
-    difficulty: 'Advanced',
-    description: 'Write a simple shell that reads commands, forks child processes, and executes programs using execve().',
-    requirements: [
-      'Loop reading commands from stdin',
-      'Parse space-delimited words into argv array',
-      'Fork and exec each command in child process',
-      'Parent waits and displays exit status',
-    ],
-    hints: [
-      'Use strtok(3) to tokenize input',
-      'execve() requires full pathname',
-      'Use printWaitStatus() or WIFEXITED/WEXITSTATUS macros',
-    ],
-    template: `#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/wait.h>
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: string;
+  estimatedHours: number;
+  milestones: { name: string; concepts: string[] }[];
+}
 
-#define MAX_ARGS 64
-#define MAX_LINE 1024
+// Build exercises from knowledge base
+const buildExercises = (): Exercise[] => {
+  const exercises: Exercise[] = [];
+  const kb = (knowledgeBase as any).exercises || {};
+  
+  (kb.beginner || []).forEach((ex: any, i: number) => {
+    exercises.push({
+      id: `beginner_${i}`,
+      chapter: ex.chapter || 3,
+      title: ex.title,
+      difficulty: 'Beginner',
+      description: ex.description,
+      requirements: ex.requirements || [],
+      hints: ex.hints || [],
+      template: ex.template || '',
+      concepts: ex.concepts || [],
+      estimatedMinutes: ex.estimatedMinutes || 30
+    });
+  });
+  
+  (kb.intermediate || []).forEach((ex: any, i: number) => {
+    exercises.push({
+      id: `intermediate_${i}`,
+      chapter: ex.chapter || 5,
+      title: ex.title,
+      difficulty: 'Intermediate',
+      description: ex.description,
+      requirements: ex.requirements || [],
+      hints: ex.hints || [],
+      template: ex.template || '',
+      concepts: ex.concepts || [],
+      estimatedMinutes: ex.estimatedMinutes || 45
+    });
+  });
+  
+  (kb.advanced || []).forEach((ex: any, i: number) => {
+    exercises.push({
+      id: `advanced_${i}`,
+      chapter: ex.chapter || 6,
+      title: ex.title,
+      difficulty: 'Advanced',
+      description: ex.description,
+      requirements: ex.requirements || [],
+      hints: ex.hints || [],
+      template: ex.template || '',
+      concepts: ex.concepts || [],
+      estimatedMinutes: ex.estimatedMinutes || 90,
+      extensions: ex.extensions || []
+    });
+  });
+  
+  return exercises;
+};
 
-extern char **environ;
+const buildProjects = (): Project[] => {
+  const kb = (knowledgeBase as any).exercises || {};
+  return (kb.projects || []).map((p: any) => ({
+    id: p.id,
+    title: p.title,
+    description: p.description,
+    difficulty: 'Project',
+    estimatedHours: p.estimatedHours || 6,
+    milestones: p.milestones || []
+  }));
+};
 
-int main(void) {
-    char line[MAX_LINE];
-    char *argv[MAX_ARGS];
-    
-    while (1) {
-        printf("$ ");
-        fflush(stdout);
-        
-        if (fgets(line, MAX_LINE, stdin) == NULL)
-            break;
-        
-        // Remove newline
-        line[strcspn(line, "\\n")] = 0;
-        
-        if (strlen(line) == 0)
-            continue;
-        
-        // FIXME: Tokenize line into argv array
-        
-        // FIXME: Fork and exec
-        
-        // FIXME: Parent waits and prints status
-    }
-    
-    return 0;
-}`,
-  },
-];
+const EXERCISES = buildExercises();
+const PROJECTS = buildProjects();
 
 export default function Exercises() {
-  const [selectedExercise, setSelectedExercise] = useState(EXERCISES[0]);
-  const [showSolution, setShowSolution] = useState(false);
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(EXERCISES[0] || null);
+  const [activeTab, setActiveTab] = useState<'exercises' | 'projects'>('exercises');
+  const [completedExercises, setCompletedExercises] = useState<string[]>([]);
+  const [showHints, setShowHints] = useState(false);
+
+  useEffect(() => {
+    const progress = getProgress();
+    const completed = Object.keys(progress.sections).filter(id => 
+      id.startsWith('ex_') && progress.sections[id].completed
+    );
+    setCompletedExercises(completed);
+  }, []);
+
+  const handleMarkComplete = (exerciseId: string) => {
+    markSectionComplete(`ex_${exerciseId}`);
+    setCompletedExercises(prev => [...prev, `ex_${exerciseId}`]);
+  };
+
+  const isCompleted = (id: string) => completedExercises.includes(`ex_${id}`);
 
   return (
-    <Layout>
+    <Layout title="Exercises">
       <div className="container mx-auto px-6 py-8">
         <div className="flex items-center gap-4 mb-8">
           <div className="w-12 h-12 bg-bauhaus-yellow flex items-center justify-center">
@@ -227,105 +134,239 @@ export default function Exercises() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Exercise list */}
-          <div className="lg:col-span-1">
-            <h2 className="text-sm font-mono uppercase tracking-wider text-bauhaus-dark-gray mb-4">
-              Available Exercises
-            </h2>
-            <div className="space-y-2">
-              {EXERCISES.map((ex) => (
-                <button
-                  key={ex.id}
-                  onClick={() => {
-                    setSelectedExercise(ex);
-                    setShowSolution(false);
-                  }}
-                  className={`w-full text-left p-3 border-2 transition-colors ${
-                    selectedExercise.id === ex.id
-                      ? 'border-bauhaus-red bg-bauhaus-gray'
-                      : 'border-bauhaus-black hover:bg-bauhaus-gray'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-mono bg-bauhaus-black text-white px-1">
-                      Ch.{ex.chapter}
-                    </span>
-                    <span className={`text-xs font-mono px-1 ${
-                      ex.difficulty === 'Beginner' ? 'bg-green-200' :
-                      ex.difficulty === 'Intermediate' ? 'bg-yellow-200' : 'bg-red-200'
-                    }`}>
-                      {ex.difficulty}
-                    </span>
-                  </div>
-                  <div className="font-semibold text-sm">{ex.title}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Exercise detail */}
-          <div className="lg:col-span-3">
-            <div className="border-2 border-bauhaus-black">
-              <div className="p-4 border-b-2 border-bauhaus-black bg-bauhaus-gray">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-bold">{selectedExercise.title}</h2>
-                  <span className={`text-xs font-mono px-2 py-1 ${
-                    selectedExercise.difficulty === 'Beginner' ? 'bg-green-200' :
-                    selectedExercise.difficulty === 'Intermediate' ? 'bg-yellow-200' : 'bg-red-200'
-                  }`}>
-                    {selectedExercise.difficulty}
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-6">
-                <p className="text-base mb-6">{selectedExercise.description}</p>
-
-                <h3 className="text-sm font-mono uppercase tracking-wider text-bauhaus-dark-gray mb-3">
-                  Requirements
-                </h3>
-                <ul className="space-y-2 mb-6">
-                  {selectedExercise.requirements.map((req, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <div className="w-2 h-2 bg-bauhaus-red mt-2 flex-shrink-0"></div>
-                      <span>{req}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <h3 className="text-sm font-mono uppercase tracking-wider text-bauhaus-dark-gray mb-3">
-                  Hints
-                </h3>
-                <ul className="space-y-2 mb-6">
-                  {selectedExercise.hints.map((hint, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <div className="w-2 h-2 bg-bauhaus-yellow mt-2 flex-shrink-0"></div>
-                      <span className="text-bauhaus-dark-gray">{hint}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <h3 className="text-sm font-mono uppercase tracking-wider text-bauhaus-dark-gray mb-3">
-                  Template Code
-                </h3>
-                <CodeBlock code={selectedExercise.template} language="c" />
-
-                <div className="mt-6 flex gap-4">
-                  <button className="px-6 py-3 bg-bauhaus-blue text-white font-semibold uppercase tracking-wider hover:bg-bauhaus-black transition-colors">
-                    Start Exercise
-                  </button>
-                  <button
-                    onClick={() => setShowSolution(!showSolution)}
-                    className="px-6 py-3 border-2 border-bauhaus-black font-semibold uppercase tracking-wider hover:bg-bauhaus-gray transition-colors"
-                  >
-                    {showSolution ? 'Hide Hints' : 'Show More Hints'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Tabs */}
+        <div className="flex gap-0 mb-6">
+          <button
+            onClick={() => setActiveTab('exercises')}
+            className={`px-6 py-3 font-semibold text-sm uppercase tracking-wider border-2 border-bauhaus-black ${
+              activeTab === 'exercises' ? 'bg-bauhaus-black text-white' : 'hover:bg-bauhaus-gray'
+            }`}
+          >
+            Exercises ({EXERCISES.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('projects')}
+            className={`px-6 py-3 font-semibold text-sm uppercase tracking-wider border-2 border-l-0 border-bauhaus-black ${
+              activeTab === 'projects' ? 'bg-bauhaus-black text-white' : 'hover:bg-bauhaus-gray'
+            }`}
+          >
+            Projects ({PROJECTS.length})
+          </button>
         </div>
+
+        {activeTab === 'exercises' && (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Exercise list */}
+            <div className="lg:col-span-1">
+              <h2 className="text-sm font-mono uppercase tracking-wider text-bauhaus-dark-gray mb-4">
+                Available Exercises
+              </h2>
+              <div className="space-y-2">
+                {EXERCISES.map((ex) => (
+                  <button
+                    key={ex.id}
+                    onClick={() => {
+                      setSelectedExercise(ex);
+                      setShowHints(false);
+                    }}
+                    className={`w-full text-left p-3 border-2 transition-colors ${
+                      selectedExercise?.id === ex.id
+                        ? 'border-bauhaus-red bg-bauhaus-gray'
+                        : 'border-bauhaus-black hover:bg-bauhaus-gray'
+                    } ${isCompleted(ex.id) ? 'border-l-4 border-l-green-500' : ''}`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-mono bg-bauhaus-black text-white px-1">
+                        Ch.{ex.chapter}
+                      </span>
+                      <span className={`text-xs font-mono px-1 ${
+                        ex.difficulty === 'Beginner' ? 'bg-green-200' :
+                        ex.difficulty === 'Intermediate' ? 'bg-yellow-200' : 'bg-red-200'
+                      }`}>
+                        {ex.difficulty}
+                      </span>
+                      {isCompleted(ex.id) && (
+                        <span className="text-xs text-green-600">Done</span>
+                      )}
+                    </div>
+                    <div className="font-semibold text-sm">{ex.title}</div>
+                    <div className="text-xs text-bauhaus-dark-gray mt-1">
+                      ~{ex.estimatedMinutes} min
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Exercise detail */}
+            <div className="lg:col-span-3">
+              {selectedExercise ? (
+                <div className="border-2 border-bauhaus-black">
+                  <div className="p-4 border-b-2 border-bauhaus-black bg-bauhaus-gray">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-bold">{selectedExercise.title}</h2>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono">~{selectedExercise.estimatedMinutes} min</span>
+                        <span className={`text-xs font-mono px-2 py-1 ${
+                          selectedExercise.difficulty === 'Beginner' ? 'bg-green-200' :
+                          selectedExercise.difficulty === 'Intermediate' ? 'bg-yellow-200' : 'bg-red-200'
+                        }`}>
+                          {selectedExercise.difficulty}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-6">
+                    <p className="text-base mb-6">{selectedExercise.description}</p>
+
+                    {/* Concepts */}
+                    {selectedExercise.concepts.length > 0 && (
+                      <div className="mb-6">
+                        <h3 className="text-sm font-mono uppercase tracking-wider text-bauhaus-dark-gray mb-2">
+                          Concepts Covered
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedExercise.concepts.map((c, i) => (
+                            <span key={i} className="px-2 py-1 bg-bauhaus-blue text-white text-xs font-mono">
+                              {c}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Requirements */}
+                    {selectedExercise.requirements.length > 0 && (
+                      <>
+                        <h3 className="text-sm font-mono uppercase tracking-wider text-bauhaus-dark-gray mb-3">
+                          Requirements
+                        </h3>
+                        <ul className="space-y-2 mb-6">
+                          {selectedExercise.requirements.map((req, idx) => (
+                            <li key={idx} className="flex items-start gap-3">
+                              <div className="w-2 h-2 bg-bauhaus-red mt-2 flex-shrink-0"></div>
+                              <span>{req}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
+
+                    {/* Hints (collapsible) */}
+                    {selectedExercise.hints.length > 0 && (
+                      <div className="mb-6">
+                        <button
+                          onClick={() => setShowHints(!showHints)}
+                          className="text-sm font-mono uppercase tracking-wider text-bauhaus-dark-gray mb-3 flex items-center gap-2"
+                        >
+                          <span>{showHints ? 'v' : '>'}</span>
+                          Hints ({selectedExercise.hints.length})
+                        </button>
+                        {showHints && (
+                          <ul className="space-y-2 border-l-4 border-bauhaus-yellow pl-4">
+                            {selectedExercise.hints.map((hint, idx) => (
+                              <li key={idx} className="text-bauhaus-dark-gray text-sm">{hint}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Template */}
+                    {selectedExercise.template && (
+                      <>
+                        <h3 className="text-sm font-mono uppercase tracking-wider text-bauhaus-dark-gray mb-3">
+                          Template Code
+                        </h3>
+                        <CodeBlock code={selectedExercise.template} language="c" />
+                      </>
+                    )}
+
+                    {/* Extensions */}
+                    {selectedExercise.extensions && selectedExercise.extensions.length > 0 && (
+                      <div className="mt-6 p-4 bg-bauhaus-gray border-l-4 border-bauhaus-blue">
+                        <h3 className="text-sm font-mono uppercase tracking-wider mb-2">
+                          Extensions (Optional)
+                        </h3>
+                        <ul className="space-y-1 text-sm">
+                          {selectedExercise.extensions.map((ext, i) => (
+                            <li key={i}>{ext}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="mt-6 flex gap-4">
+                      {!isCompleted(selectedExercise.id) ? (
+                        <button
+                          onClick={() => handleMarkComplete(selectedExercise.id)}
+                          className="px-6 py-3 bg-bauhaus-blue text-white font-semibold uppercase tracking-wider hover:bg-bauhaus-black transition-colors"
+                        >
+                          Mark Complete
+                        </button>
+                      ) : (
+                        <span className="px-6 py-3 bg-green-500 text-white font-semibold uppercase tracking-wider">
+                          Completed
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="border-2 border-bauhaus-black p-8 text-center text-bauhaus-dark-gray">
+                  Select an exercise to get started
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'projects' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {PROJECTS.map((project) => (
+              <div key={project.id} className="border-2 border-bauhaus-black">
+                <div className="p-4 border-b-2 border-bauhaus-black bg-bauhaus-red text-white">
+                  <h3 className="text-lg font-bold">{project.title}</h3>
+                  <span className="text-sm opacity-80">~{project.estimatedHours} hours</span>
+                </div>
+                <div className="p-4">
+                  <p className="text-sm mb-4">{project.description}</p>
+                  
+                  {project.milestones.length > 0 && (
+                    <>
+                      <h4 className="text-xs font-mono uppercase tracking-wider text-bauhaus-dark-gray mb-2">
+                        Milestones
+                      </h4>
+                      <div className="space-y-2">
+                        {project.milestones.map((m, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <div className="w-6 h-6 border-2 border-bauhaus-black flex items-center justify-center text-xs font-bold">
+                              {i + 1}
+                            </div>
+                            <div>
+                              <div className="font-semibold text-sm">{m.name}</div>
+                              <div className="text-xs text-bauhaus-dark-gray">
+                                {m.concepts.join(', ')}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+            
+            {PROJECTS.length === 0 && (
+              <div className="col-span-2 border-2 border-bauhaus-black p-8 text-center text-bauhaus-dark-gray">
+                No projects available yet. Complete exercises first!
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </Layout>
   );

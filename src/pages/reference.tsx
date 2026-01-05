@@ -1,9 +1,56 @@
 import { useState } from 'react';
 import { Layout } from '../components/Layout';
 import { AsciiDiagram } from '../components/AsciiDiagram';
+import { CodeBlock } from '../components/CodeBlock';
 import { DIAGRAMS, generateTable } from '../lib/diagon';
+import knowledgeBase from '../../content/knowledge-base.json';
 
-const API_CATEGORIES = [
+// Build categories from knowledge base
+const buildCategories = () => {
+  const syscalls = knowledgeBase.systemCalls || {};
+  const categories: Record<string, any[]> = {
+    'File I/O': [],
+    'Process Control': [],
+    'Signals': [],
+    'Other': []
+  };
+  
+  Object.values(syscalls).forEach((sc: any) => {
+    const item = {
+      name: sc.name,
+      signature: sc.signature,
+      desc: sc.description,
+      returnValue: sc.returnValue,
+      parameters: sc.parameters,
+      errors: sc.errors,
+      flags: sc.flags,
+      related: sc.related,
+      example: sc.example,
+      notes: sc.notes,
+      manSection: sc.manSection
+    };
+    
+    if (sc.category === 'file_io') {
+      categories['File I/O'].push(item);
+    } else if (sc.category === 'process') {
+      categories['Process Control'].push(item);
+    } else if (sc.category === 'signals') {
+      categories['Signals'].push(item);
+    } else {
+      categories['Other'].push(item);
+    }
+  });
+  
+  return Object.entries(categories)
+    .filter(([_, apis]) => apis.length > 0)
+    .map(([name, apis]) => ({
+      name,
+      color: name === 'File I/O' ? 'blue' : name === 'Process Control' ? 'red' : name === 'Signals' ? 'yellow' : 'black',
+      apis
+    }));
+};
+
+const API_CATEGORIES = buildCategories().length > 0 ? buildCategories() : [
   {
     name: 'File I/O',
     color: 'blue',
@@ -113,19 +160,97 @@ export default function Reference() {
             {/* API list */}
             {currentCategory && (
               <div className="space-y-4">
-                {currentCategory.apis.map((api) => (
-                  <div key={api.name} className="border-2 border-bauhaus-black p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className="font-bold text-lg">{api.name}()</h3>
-                        <p className="text-sm text-bauhaus-dark-gray mt-1">{api.desc}</p>
+                {currentCategory.apis.map((api: any) => (
+                  <div key={api.name} className="border-2 border-bauhaus-black">
+                    <div className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 className="font-bold text-lg">{api.name}()</h3>
+                          <p className="text-sm text-bauhaus-dark-gray mt-1">{api.desc}</p>
+                        </div>
+                        <div className="text-xs font-mono bg-bauhaus-gray px-2 py-1">
+                          man {api.manSection || 2}
+                        </div>
                       </div>
-                      <div className="text-xs font-mono bg-bauhaus-gray px-2 py-1">
-                        man 2
+                      <div className="mt-3 bg-bauhaus-black text-bauhaus-white p-3 font-mono text-sm overflow-x-auto">
+                        {api.signature}
                       </div>
-                    </div>
-                    <div className="mt-3 bg-bauhaus-black text-bauhaus-white p-3 font-mono text-sm overflow-x-auto">
-                      {api.signature}
+                      
+                      {/* Return value */}
+                      {api.returnValue && (
+                        <div className="mt-3">
+                          <span className="text-xs font-mono uppercase text-bauhaus-dark-gray">Returns: </span>
+                          <span className="text-sm">{api.returnValue}</span>
+                        </div>
+                      )}
+                      
+                      {/* Parameters */}
+                      {api.parameters && api.parameters.length > 0 && (
+                        <div className="mt-3">
+                          <div className="text-xs font-mono uppercase text-bauhaus-dark-gray mb-2">Parameters</div>
+                          <div className="space-y-1">
+                            {api.parameters.map((p: any, i: number) => (
+                              <div key={i} className="flex gap-2 text-sm">
+                                <code className="font-mono text-bauhaus-blue">{p.name}</code>
+                                <span className="text-bauhaus-dark-gray">({p.type})</span>
+                                <span>{p.desc}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Flags */}
+                      {api.flags && api.flags.length > 0 && (
+                        <div className="mt-3">
+                          <div className="text-xs font-mono uppercase text-bauhaus-dark-gray mb-2">Flags</div>
+                          <div className="flex flex-wrap gap-2">
+                            {api.flags.map((f: any, i: number) => (
+                              <span 
+                                key={i} 
+                                className="px-2 py-1 bg-bauhaus-gray text-xs font-mono"
+                                title={f.desc}
+                              >
+                                {f.name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Errors */}
+                      {api.errors && api.errors.length > 0 && (
+                        <div className="mt-3">
+                          <div className="text-xs font-mono uppercase text-bauhaus-dark-gray mb-2">Possible Errors</div>
+                          <div className="flex flex-wrap gap-1">
+                            {api.errors.map((e: string, i: number) => (
+                              <span key={i} className="px-2 py-0.5 bg-red-100 text-bauhaus-red text-xs font-mono">
+                                {e}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Example */}
+                      {api.example && (
+                        <div className="mt-3">
+                          <div className="text-xs font-mono uppercase text-bauhaus-dark-gray mb-2">Example</div>
+                          <CodeBlock code={api.example} language="c" />
+                        </div>
+                      )}
+                      
+                      {/* Related */}
+                      {api.related && api.related.length > 0 && (
+                        <div className="mt-3 flex items-center gap-2">
+                          <span className="text-xs font-mono uppercase text-bauhaus-dark-gray">See also:</span>
+                          {api.related.map((r: string, i: number) => (
+                            <span key={i} className="text-sm text-bauhaus-blue hover:underline cursor-pointer">
+                              {r}()
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

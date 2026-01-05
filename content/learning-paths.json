@@ -1,0 +1,505 @@
+{
+  "paths": {
+    "fundamentals": {
+      "title": "System Programming Fundamentals",
+      "duration": "2 weeks",
+      "prerequisites": [],
+      "modules": [
+        {
+          "name": "Error Handling",
+          "concepts": [
+            "errno",
+            "perror",
+            "strerror"
+          ],
+          "systemCalls": [],
+          "exercises": [
+            "Write error-checking wrapper functions"
+          ],
+          "estimatedHours": 2
+        },
+        {
+          "name": "System Data Types",
+          "concepts": [
+            "System data types",
+            "Printing system data types"
+          ],
+          "systemCalls": [],
+          "exercises": [
+            "Write functions to print different system data types"
+          ],
+          "estimatedHours": 1
+        },
+        {
+          "name": "Code Examples Overview",
+          "concepts": [
+            "Code examples structure",
+            "Common header file",
+            "Error-handling functions"
+          ],
+          "systemCalls": [],
+          "exercises": [
+            "Modify and build sample code examples"
+          ],
+          "estimatedHours": 1
+        }
+      ]
+    },
+    "file_mastery": {
+      "title": "File I/O Mastery",
+      "duration": "1 week",
+      "prerequisites": [
+        "fundamentals"
+      ],
+      "modules": [
+        {
+          "name": "File I/O Basics",
+          "concepts": [
+            "File descriptors",
+            "System calls vs stdio",
+            "Key file I/O system calls"
+          ],
+          "systemCalls": [
+            "open",
+            "read",
+            "write",
+            "close"
+          ],
+          "exercises": [
+            "Implement file copying utility",
+            "Create file with specific permissions"
+          ],
+          "estimatedHours": 3
+        },
+        {
+          "name": "Advanced File Operations",
+          "concepts": [
+            "File creation flags",
+            "File status flags",
+            "Universality of I/O"
+          ],
+          "systemCalls": [
+            "open with various flags"
+          ],
+          "exercises": [
+            "Create files with different attributes",
+            "Implement file locking mechanism"
+          ],
+          "estimatedHours": 2
+        }
+      ]
+    },
+    "process_expert": {
+      "title": "Process Management Expert",
+      "duration": "2 weeks",
+      "prerequisites": [
+        "fundamentals",
+        "file_mastery"
+      ],
+      "modules": [
+        {
+          "name": "Process Creation and Termination",
+          "concepts": [
+            "Process creation",
+            "Process termination",
+            "Process IDs"
+          ],
+          "systemCalls": [
+            "fork",
+            "exec",
+            "exit",
+            "wait"
+          ],
+          "exercises": [
+            "Implement process tree creation",
+            "Create parent-child communication"
+          ],
+          "estimatedHours": 4
+        },
+        {
+          "name": "Process Attributes",
+          "concepts": [
+            "Process attributes",
+            "Process scheduling",
+            "Process priority"
+          ],
+          "systemCalls": [
+            "nice",
+            "getpriority",
+            "setpriority"
+          ],
+          "exercises": [
+            "Modify process priority",
+            "Implement process scheduling simulation"
+          ],
+          "estimatedHours": 3
+        }
+      ]
+    },
+    "signals_deep": {
+      "title": "Signal Handling Deep Dive",
+      "duration": "1 week",
+      "prerequisites": [
+        "process_expert"
+      ],
+      "modules": [
+        {
+          "name": "Signal Basics",
+          "concepts": [
+            "Signal types",
+            "Signal delivery",
+            "Signal handling"
+          ],
+          "systemCalls": [
+            "signal",
+            "kill",
+            "raise"
+          ],
+          "exercises": [
+            "Implement custom signal handler",
+            "Create signal-based communication"
+          ],
+          "estimatedHours": 3
+        },
+        {
+          "name": "Advanced Signal Handling",
+          "concepts": [
+            "Signal masking",
+            "Signal sets",
+            "Signal blocking"
+          ],
+          "systemCalls": [
+            "sigprocmask",
+            "sigsuspend",
+            "sigaction"
+          ],
+          "exercises": [
+            "Implement non-blocking signal handling",
+            "Create signal-based synchronization"
+          ],
+          "estimatedHours": 3
+        }
+      ]
+    },
+    "complete_course": {
+      "title": "Complete Linux System Programming",
+      "duration": "6 weeks",
+      "prerequisites": [],
+      "modules": [
+        {
+          "name": "Course Introduction",
+          "concepts": [
+            "Course overview",
+            "Course materials",
+            "Common abbreviations"
+          ],
+          "systemCalls": [],
+          "exercises": [
+            "Set up development environment"
+          ],
+          "estimatedHours": 1
+        },
+        {
+          "name": "Fundamentals",
+          "concepts": [
+            "Error handling",
+            "System data types",
+            "Code examples"
+          ],
+          "systemCalls": [],
+          "exercises": [
+            "Complete fundamental exercises"
+          ],
+          "estimatedHours": 4
+        },
+        {
+          "name": "File I/O",
+          "concepts": [
+            "File descriptors",
+            "File operations",
+            "Advanced file handling"
+          ],
+          "systemCalls": [
+            "open",
+            "read",
+            "write",
+            "close"
+          ],
+          "exercises": [
+            "Implement file utilities",
+            "Create file management system"
+          ],
+          "estimatedHours": 5
+        },
+        {
+          "name": "Process Management",
+          "concepts": [
+            "Process creation",
+            "Process attributes",
+            "Inter-process communication"
+          ],
+          "systemCalls": [
+            "fork",
+            "exec",
+            "wait",
+            "pipe"
+          ],
+          "exercises": [
+            "Implement process communication",
+            "Create process management system"
+          ],
+          "estimatedHours": 7
+        },
+        {
+          "name": "Signal Handling",
+          "concepts": [
+            "Signal types",
+            "Signal handling",
+            "Advanced signal management"
+          ],
+          "systemCalls": [
+            "signal",
+            "kill",
+            "sigaction"
+          ],
+          "exercises": [
+            "Implement signal-based applications",
+            "Create signal handling utilities"
+          ],
+          "estimatedHours": 6
+        }
+      ]
+    }
+  },
+  "skillTree": {
+    "nodes": [
+      {
+        "id": "errno",
+        "level": 1,
+        "unlocks": [
+          "file_io_basics"
+        ]
+      },
+      {
+        "id": "file_io_basics",
+        "level": 2,
+        "unlocks": [
+          "advanced_io",
+          "process_basics"
+        ]
+      },
+      {
+        "id": "process_basics",
+        "level": 3,
+        "unlocks": [
+          "process_advanced",
+          "signal_basics"
+        ]
+      },
+      {
+        "id": "signal_basics",
+        "level": 4,
+        "unlocks": [
+          "signal_advanced"
+        ]
+      },
+      {
+        "id": "advanced_io",
+        "level": 3,
+        "unlocks": [
+          "file_system"
+        ]
+      },
+      {
+        "id": "process_advanced",
+        "level": 4,
+        "unlocks": [
+          "interprocess_communication"
+        ]
+      },
+      {
+        "id": "signal_advanced",
+        "level": 5,
+        "unlocks": [
+          "real_time_signals"
+        ]
+      },
+      {
+        "id": "file_system",
+        "level": 4,
+        "unlocks": [
+          "file_system_advanced"
+        ]
+      },
+      {
+        "id": "interprocess_communication",
+        "level": 5,
+        "unlocks": [
+          "sockets"
+        ]
+      },
+      {
+        "id": "real_time_signals",
+        "level": 6,
+        "unlocks": [
+          "real_time_applications"
+        ]
+      },
+      {
+        "id": "file_system_advanced",
+        "level": 5,
+        "unlocks": [
+          "file_system_expert"
+        ]
+      },
+      {
+        "id": "sockets",
+        "level": 6,
+        "unlocks": [
+          "network_programming"
+        ]
+      },
+      {
+        "id": "real_time_applications",
+        "level": 7,
+        "unlocks": [
+          "embedded_systems"
+        ]
+      },
+      {
+        "id": "file_system_expert",
+        "level": 6,
+        "unlocks": [
+          "file_system_design"
+        ]
+      },
+      {
+        "id": "network_programming",
+        "level": 7,
+        "unlocks": [
+          "distributed_systems"
+        ]
+      },
+      {
+        "id": "embedded_systems",
+        "level": 8,
+        "unlocks": [
+          "embedded_expert"
+        ]
+      },
+      {
+        "id": "file_system_design",
+        "level": 7,
+        "unlocks": [
+          "file_system_architecture"
+        ]
+      },
+      {
+        "id": "distributed_systems",
+        "level": 8,
+        "unlocks": [
+          "cloud_computing"
+        ]
+      },
+      {
+        "id": "embedded_expert",
+        "level": 9,
+        "unlocks": [
+          "embedded_optimization"
+        ]
+      },
+      {
+        "id": "file_system_architecture",
+        "level": 8,
+        "unlocks": [
+          "file_system_implementation"
+        ]
+      },
+      {
+        "id": "cloud_computing",
+        "level": 9,
+        "unlocks": [
+          "cloud_architecture"
+        ]
+      },
+      {
+        "id": "embedded_optimization",
+        "level": 10,
+        "unlocks": [
+          "embedded_performance"
+        ]
+      },
+      {
+        "id": "file_system_implementation",
+        "level": 9,
+        "unlocks": [
+          "file_system_optimization"
+        ]
+      },
+      {
+        "id": "cloud_architecture",
+        "level": 10,
+        "unlocks": [
+          "cloud_optimization"
+        ]
+      },
+      {
+        "id": "embedded_performance",
+        "level": 11,
+        "unlocks": [
+          "embedded_specialization"
+        ]
+      },
+      {
+        "id": "file_system_optimization",
+        "level": 10,
+        "unlocks": [
+          "file_system_expertise"
+        ]
+      },
+      {
+        "id": "cloud_optimization",
+        "level": 11,
+        "unlocks": [
+          "cloud_specialization"
+        ]
+      },
+      {
+        "id": "embedded_specialization",
+        "level": 12,
+        "unlocks": [
+          "embedded_mastery"
+        ]
+      },
+      {
+        "id": "file_system_expertise",
+        "level": 11,
+        "unlocks": [
+          "file_system_mastery"
+        ]
+      },
+      {
+        "id": "cloud_specialization",
+        "level": 12,
+        "unlocks": [
+          "cloud_mastery"
+        ]
+      },
+      {
+        "id": "embedded_mastery",
+        "level": 13,
+        "unlocks": []
+      },
+      {
+        "id": "file_system_mastery",
+        "level": 13,
+        "unlocks": []
+      },
+      {
+        "id": "cloud_mastery",
+        "level": 13,
+        "unlocks": []
+      }
+    ]
+  }
+}

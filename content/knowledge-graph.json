@@ -1,0 +1,1438 @@
+{
+  "nodes": [
+    {
+      "id": "syscall_open",
+      "type": "syscall",
+      "label": "open",
+      "data": {
+        "name": "open",
+        "signature": "int open(const char *pathname, int flags, ...)",
+        "returnType": "int (file descriptor or -1)",
+        "parameters": [
+          {
+            "name": "pathname",
+            "type": "const char*",
+            "description": "Path to the file to be opened"
+          },
+          {
+            "name": "flags",
+            "type": "int",
+            "description": "Flags specifying the mode in which the file is to be opened"
+          }
+        ],
+        "errors": [
+          "ENOENT",
+          "EACCES",
+          "EBADF",
+          "EINTR"
+        ],
+        "description": "Opens a file and returns a file descriptor",
+        "manSection": 2,
+        "example": "fd = open(\"file.txt\", O_RDONLY);",
+        "relatedCalls": [
+          "close",
+          "read",
+          "write"
+        ],
+        "flags": [
+          {
+            "name": "O_RDONLY",
+            "value": 0,
+            "description": "Open for reading only"
+          }
+        ]
+      },
+      "cluster": "file_io"
+    },
+    {
+      "id": "syscall_read",
+      "type": "syscall",
+      "label": "read",
+      "data": {
+        "name": "read",
+        "signature": "ssize_t read(int fd, void *buf, size_t count)",
+        "returnType": "ssize_t (number of bytes read or -1)",
+        "parameters": [
+          {
+            "name": "fd",
+            "type": "int",
+            "description": "File descriptor"
+          },
+          {
+            "name": "buf",
+            "type": "void*",
+            "description": "Buffer to read data into"
+          },
+          {
+            "name": "count",
+            "type": "size_t",
+            "description": "Number of bytes to read"
+          }
+        ],
+        "errors": [
+          "EINTR",
+          "EBADF"
+        ],
+        "description": "Reads data from a file descriptor",
+        "manSection": 2,
+        "example": "cnt = read(fd, buf, numbytes);",
+        "relatedCalls": [
+          "open",
+          "write",
+          "close"
+        ]
+      },
+      "cluster": "file_io"
+    },
+    {
+      "id": "syscall_write",
+      "type": "syscall",
+      "label": "write",
+      "data": {
+        "name": "write",
+        "signature": "ssize_t write(int fd, const void *buf, size_t count)",
+        "returnType": "ssize_t (number of bytes written or -1)",
+        "parameters": [
+          {
+            "name": "fd",
+            "type": "int",
+            "description": "File descriptor"
+          },
+          {
+            "name": "buf",
+            "type": "const void*",
+            "description": "Buffer containing data to write"
+          },
+          {
+            "name": "count",
+            "type": "size_t",
+            "description": "Number of bytes to write"
+          }
+        ],
+        "errors": [
+          "EBADF"
+        ],
+        "description": "Writes data to a file descriptor",
+        "manSection": 2,
+        "example": "cnt = write(fd, buf, numbytes);",
+        "relatedCalls": [
+          "open",
+          "read",
+          "close"
+        ]
+      },
+      "cluster": "file_io"
+    },
+    {
+      "id": "syscall_close",
+      "type": "syscall",
+      "label": "close",
+      "data": {
+        "name": "close",
+        "signature": "int close(int fd)",
+        "returnType": "int (0 on success or -1)",
+        "parameters": [
+          {
+            "name": "fd",
+            "type": "int",
+            "description": "File descriptor to close"
+          }
+        ],
+        "errors": [
+          "EBADF"
+        ],
+        "description": "Closes a file descriptor",
+        "manSection": 2,
+        "example": "close(fd);",
+        "relatedCalls": [
+          "open",
+          "read",
+          "write"
+        ]
+      },
+      "cluster": "file_io"
+    },
+    {
+      "id": "syscall_perror",
+      "type": "syscall",
+      "label": "perror",
+      "data": {
+        "name": "perror",
+        "signature": "void perror(const char *msg)",
+        "returnType": "void",
+        "parameters": [
+          {
+            "name": "msg",
+            "type": "const char*",
+            "description": "Message to display"
+          }
+        ],
+        "errors": [],
+        "description": "Prints an error message to stderr based on the value of errno",
+        "manSection": 3,
+        "example": "perror(\"open\");",
+        "relatedCalls": []
+      },
+      "cluster": "other"
+    },
+    {
+      "id": "syscall_strerror",
+      "type": "syscall",
+      "label": "strerror",
+      "data": {
+        "name": "strerror",
+        "signature": "char *strerror(int errnum)",
+        "returnType": "char* (error message string or NULL)",
+        "parameters": [
+          {
+            "name": "errnum",
+            "type": "int",
+            "description": "Error number"
+          }
+        ],
+        "errors": [],
+        "description": "Returns a string describing the error number",
+        "manSection": 3,
+        "example": "strerror(errno);",
+        "relatedCalls": [
+          "perror"
+        ]
+      },
+      "cluster": "other"
+    },
+    {
+      "id": "syscall_fork",
+      "type": "syscall",
+      "label": "fork",
+      "data": {
+        "name": "fork",
+        "signature": "pid_t fork(void)",
+        "returnType": "pid_t (child PID in parent, 0 in child, -1 on error)",
+        "parameters": [],
+        "errors": [],
+        "description": "Creates a new process by duplicating the calling process",
+        "manSection": 2,
+        "example": "pid = fork();",
+        "relatedCalls": [
+          "execve",
+          "waitpid"
+        ],
+        "flags": []
+      },
+      "cluster": "process"
+    },
+    {
+      "id": "syscall_execve",
+      "type": "syscall",
+      "label": "execve",
+      "data": {
+        "name": "execve",
+        "signature": "int execve(const char *pathname, char *const argv[], char *const envp[])",
+        "returnType": "int (does not return on success, -1 on error)",
+        "parameters": [
+          {
+            "name": "pathname",
+            "type": "const char*",
+            "description": "Path to the executable file"
+          },
+          {
+            "name": "argv",
+            "type": "char *const[]",
+            "description": "Argument list"
+          },
+          {
+            "name": "envp",
+            "type": "char *const[]",
+            "description": "Environment list"
+          }
+        ],
+        "errors": [],
+        "description": "Executes a program",
+        "manSection": 2,
+        "example": "execve(\"/bin/ls\", argv, envp);",
+        "relatedCalls": [
+          "fork",
+          "waitpid"
+        ],
+        "flags": []
+      },
+      "cluster": "process"
+    },
+    {
+      "id": "syscall_waitpid",
+      "type": "syscall",
+      "label": "waitpid",
+      "data": {
+        "name": "waitpid",
+        "signature": "pid_t waitpid(pid_t pid, int *status, int options)",
+        "returnType": "pid_t (child PID on success, -1 on error)",
+        "parameters": [
+          {
+            "name": "pid",
+            "type": "pid_t",
+            "description": "Process ID to wait for"
+          },
+          {
+            "name": "status",
+            "type": "int*",
+            "description": "Status information"
+          },
+          {
+            "name": "options",
+            "type": "int",
+            "description": "Options"
+          }
+        ],
+        "errors": [
+          "ECHILD"
+        ],
+        "description": "Waits for a child process to change state",
+        "manSection": 2,
+        "example": "waitpid(pid, &status, 0);",
+        "relatedCalls": [
+          "fork",
+          "execve",
+          "wait",
+          "waitid"
+        ],
+        "flags": [
+          {
+            "name": "WUNTRACED",
+            "value": "0x00000001",
+            "description": "Report stopped children."
+          },
+          {
+            "name": "WCONTINUED",
+            "value": "0x00000002",
+            "description": "Report stopped children that have continued."
+          },
+          {
+            "name": "WNOHANG",
+            "value": "0x00000001",
+            "description": "Cause nonblocking wait. If no children have changed state, returns immediately with return value of 0."
+          }
+        ]
+      },
+      "cluster": "process"
+    },
+    {
+      "id": "syscall_sigaction",
+      "type": "syscall",
+      "label": "sigaction",
+      "data": {
+        "name": "sigaction",
+        "signature": "int sigaction(int sig, const struct sigaction *act, struct sigaction *oldact);",
+        "returnType": "int (0 on success, -1 on error)",
+        "parameters": [
+          {
+            "name": "sig",
+            "type": "int",
+            "description": "Signal number"
+          },
+          {
+            "name": "act",
+            "type": "const struct sigaction *",
+            "description": "Pointer to new signal action"
+          },
+          {
+            "name": "oldact",
+            "type": "struct sigaction *",
+            "description": "Pointer to store previous signal action (can be NULL)"
+          }
+        ],
+        "errors": [
+          "EINVAL"
+        ],
+        "description": "Changes or retrieves the disposition of a signal",
+        "manSection": 2,
+        "example": "sigaction(SIGINT, &sa, NULL);",
+        "relatedCalls": [
+          "sigprocmask",
+          "sigpending",
+          "pause",
+          "sigsuspend",
+          "signal"
+        ],
+        "flags": [
+          {
+            "name": "SA_RESTART",
+            "value": "0x00000001",
+            "description": "Restart functions if interrupted by the signal."
+          },
+          {
+            "name": "SA_NOCLDSTOP",
+            "value": "0x00000002",
+            "description": "Prevent SIGCHLD from being generated for stopped or continued children."
+          }
+        ]
+      },
+      "cluster": "signals"
+    },
+    {
+      "id": "syscall_pause",
+      "type": "syscall",
+      "label": "pause",
+      "data": {
+        "name": "pause",
+        "signature": "int pause(void);",
+        "returnType": "int (always -1)",
+        "parameters": [],
+        "errors": [
+          "EINTR"
+        ],
+        "description": "Blocks execution until a signal is caught",
+        "manSection": 2,
+        "example": "pause();",
+        "relatedCalls": [
+          "sigsuspend"
+        ],
+        "flags": []
+      },
+      "cluster": "signals"
+    },
+    {
+      "id": "syscall_exit",
+      "type": "syscall",
+      "label": "exit",
+      "data": {
+        "name": "exit",
+        "signature": "void exit(int status);",
+        "returnType": "void",
+        "parameters": [
+          {
+            "name": "status",
+            "type": "int",
+            "description": "Exit status of the process"
+          }
+        ],
+        "errors": [],
+        "description": "Terminates the calling process. Calls exit handlers registered by the process, flushes stdio buffers, and then calls _exit(status).",
+        "manSection": 3,
+        "example": "exit(0);",
+        "relatedCalls": [
+          "_exit",
+          "atexit",
+          "on_exit"
+        ],
+        "flags": []
+      },
+      "cluster": "process"
+    },
+    {
+      "id": "syscall__exit",
+      "type": "syscall",
+      "label": "_exit",
+      "data": {
+        "name": "_exit",
+        "signature": "void _exit(int status);",
+        "returnType": "void",
+        "parameters": [
+          {
+            "name": "status",
+            "type": "int",
+            "description": "Exit status of the process"
+          }
+        ],
+        "errors": [],
+        "description": "Terminates the calling process without calling exit handlers or flushing stdio buffers.",
+        "manSection": 2,
+        "example": "_exit(0);",
+        "relatedCalls": [
+          "exit"
+        ],
+        "flags": []
+      },
+      "cluster": "process"
+    },
+    {
+      "id": "syscall_wait",
+      "type": "syscall",
+      "label": "wait",
+      "data": {
+        "name": "wait",
+        "signature": "pid_t wait(int *wstatus);",
+        "returnType": "pid_t (PID of the child whose status is being reported, or -1 on error)",
+        "parameters": [
+          {
+            "name": "wstatus",
+            "type": "int*",
+            "description": "Pointer to an integer where the status of the child is stored. Can be NULL if not needed."
+          }
+        ],
+        "errors": [],
+        "description": "The original 'wait' API. Equivalent to waitpid(-1, &wstatus, 0). Still commonly used to handle the simple, common case: wait for any child to terminate.",
+        "manSection": 2,
+        "example": "pid_t childPid = wait(NULL);",
+        "relatedCalls": [
+          "waitpid",
+          "waitid"
+        ],
+        "flags": []
+      },
+      "cluster": "process"
+    },
+    {
+      "id": "syscall_waitid",
+      "type": "syscall",
+      "label": "waitid",
+      "data": {
+        "name": "waitid",
+        "signature": "int waitid(idtype_t idtype, id_t id, siginfo_t *infop, int options);",
+        "returnType": "int (0 on success, -1 on error)",
+        "parameters": [
+          {
+            "name": "idtype",
+            "type": "idtype_t",
+            "description": "Specifies the type of the ID."
+          },
+          {
+            "name": "id",
+            "type": "id_t",
+            "description": "The ID of the process to wait for."
+          },
+          {
+            "name": "infop",
+            "type": "siginfo_t*",
+            "description": "Pointer to a siginfo_t structure where the status of the child is stored. Can be NULL if not needed."
+          },
+          {
+            "name": "options",
+            "type": "int",
+            "description": "Bit mask specifying additional options."
+          }
+        ],
+        "errors": [],
+        "description": "Similar to waitpid(), but provides additional functionality, including independently choosing which events (termination, stopped, continued) to wait on and waiting via PID file descriptor.",
+        "manSection": 2,
+        "example": "waitid(P_PID, pid, &info, 0);",
+        "relatedCalls": [
+          "waitpid",
+          "wait"
+        ],
+        "flags": []
+      },
+      "cluster": "other"
+    },
+    {
+      "id": "syscall_sigemptyset",
+      "type": "syscall",
+      "label": "sigemptyset",
+      "data": {
+        "name": "sigemptyset",
+        "signature": "int sigemptyset(sigset_t *set);",
+        "returnType": "int (0 on success, -1 on error)",
+        "parameters": [
+          {
+            "name": "set",
+            "type": "sigset_t*",
+            "description": "Pointer to a signal set to be initialized."
+          }
+        ],
+        "errors": [],
+        "description": "Initializes the signal set pointed to by set to empty, with all signal numbers excluded from the set.",
+        "manSection": 2,
+        "example": "sigemptyset(&sa.sa_mask);",
+        "relatedCalls": [
+          "sigfillset",
+          "sigaddset",
+          "sigdelset"
+        ],
+        "flags": []
+      },
+      "cluster": "other"
+    },
+    {
+      "id": "syscall_getpid",
+      "type": "syscall",
+      "label": "getpid",
+      "data": {
+        "name": "getpid",
+        "signature": "pid_t getpid(void);",
+        "returnType": "pid_t (Process ID of the calling process)",
+        "parameters": [],
+        "errors": [],
+        "description": "Returns the process ID of the calling process.",
+        "manSection": 2,
+        "example": "pid_t pid = getpid();",
+        "relatedCalls": [
+          "getppid"
+        ],
+        "flags": []
+      },
+      "cluster": "process"
+    },
+    {
+      "id": "syscall_getppid",
+      "type": "syscall",
+      "label": "getppid",
+      "data": {
+        "name": "getppid",
+        "signature": "pid_t getppid(void);",
+        "returnType": "pid_t (Process ID of the parent of the calling process)",
+        "parameters": [],
+        "errors": [],
+        "description": "Returns the process ID of the parent of the calling process.",
+        "manSection": 2,
+        "example": "pid_t ppid = getppid();",
+        "relatedCalls": [
+          "getpid"
+        ],
+        "flags": []
+      },
+      "cluster": "process"
+    },
+    {
+      "id": "syscall_sleep",
+      "type": "syscall",
+      "label": "sleep",
+      "data": {
+        "name": "sleep",
+        "signature": "unsigned int sleep(unsigned int seconds);",
+        "returnType": "unsigned int (Number of seconds remaining)",
+        "parameters": [
+          {
+            "name": "seconds",
+            "type": "unsigned int",
+            "description": "Number of seconds to sleep."
+          }
+        ],
+        "errors": [],
+        "description": "Suspends execution of the calling thread for (at least) the time specified in seconds.",
+        "manSection": 3,
+        "example": "sleep(5);",
+        "relatedCalls": [
+          "nanosleep",
+          "usleep"
+        ],
+        "flags": []
+      },
+      "cluster": "other"
+    },
+    {
+      "id": "concept_file_descriptor",
+      "type": "concept",
+      "label": "File Descriptor",
+      "data": {
+        "name": "File Descriptor",
+        "definition": "A non-negative integer that uniquely identifies an open file to a process",
+        "keyPoints": [
+          "File descriptors are returned by system calls like open()",
+          "They are used to refer to files in subsequent system calls like read() and write()",
+          "File descriptors are process-specific"
+        ],
+        "commonMistakes": [
+          "Assuming file descriptors are portable across processes",
+          "Not checking for errors when file descriptors are returned"
+        ],
+        "bestPractices": [
+          "Always check the return value of system calls that return file descriptors",
+          "Close file descriptors when they are no longer needed"
+        ]
+      },
+      "cluster": "concepts"
+    },
+    {
+      "id": "concept_error_handling",
+      "type": "concept",
+      "label": "Error Handling",
+      "data": {
+        "name": "Error Handling",
+        "definition": "The process of detecting and responding to errors in system calls and library functions",
+        "keyPoints": [
+          "Most system calls return -1 on error and set errno to indicate the cause",
+          "errno should only be checked if the return value indicates an error",
+          "APIs do not reset errno to 0 on success"
+        ],
+        "commonMistakes": [
+          "Checking errno before checking the return value",
+          "Assuming errno is 0 before a system call"
+        ],
+        "bestPractices": [
+          "Always check the return value of system calls first",
+          "Use perror() or strerror() to display error messages"
+        ]
+      },
+      "cluster": "concepts"
+    },
+    {
+      "id": "concept_process",
+      "type": "concept",
+      "label": "Process",
+      "data": {
+        "name": "Process",
+        "definition": "An instance of a program in execution",
+        "keyPoints": [
+          "Each process has a unique process ID (PID)",
+          "Processes are created using fork()",
+          "Processes can execute new programs using execve()"
+        ],
+        "commonMistakes": [
+          "Assuming fork() returns the same PID in both parent and child",
+          "Not handling errors from fork() properly"
+        ],
+        "bestPractices": [
+          "Check the return value of fork() to determine if you are in the parent or child",
+          "Use waitpid() to wait for child processes to terminate"
+        ]
+      },
+      "cluster": "concepts"
+    },
+    {
+      "id": "concept_signal",
+      "type": "concept",
+      "label": "Signal",
+      "data": {
+        "name": "Signal",
+        "definition": "An asynchronous notification sent to a process to notify it of an event",
+        "keyPoints": [
+          "Signals can be generated by the kernel or by other processes",
+          "Each signal has a default action (ignore, terminate, core dump, stop, continue)",
+          "Signals can be caught and handled by a user-defined function",
+          "Some signals (SIGKILL, SIGSTOP) cannot be caught, blocked, or ignored"
+        ],
+        "commonMistakes": [
+          "Assuming all signals can be caught or ignored",
+          "Not properly initializing signal sets",
+          "Using unsafe functions in signal handlers"
+        ],
+        "bestPractices": [
+          "Use sigaction() instead of the older signal() for more control",
+          "Initialize signal sets properly using sigemptyset() or sigfillset()",
+          "Minimize work in signal handlers to avoid reentrancy issues"
+        ]
+      },
+      "cluster": "concepts"
+    },
+    {
+      "id": "concept_signal_disposition",
+      "type": "concept",
+      "label": "Signal Disposition",
+      "data": {
+        "name": "Signal Disposition",
+        "definition": "The action a process takes when a signal is delivered",
+        "keyPoints": [
+          "Default actions include ignore, terminate, core dump, stop, and continue",
+          "Disposition can be changed to ignore, handle, or revert to default",
+          "Cannot change disposition to terminate or core dump + terminate",
+          "SIGKILL and SIGSTOP always kill or stop a process"
+        ],
+        "commonMistakes": [],
+        "bestPractices": []
+      },
+      "cluster": "concepts"
+    },
+    {
+      "id": "concept_signal_mask",
+      "type": "concept",
+      "label": "Signal Mask",
+      "data": {
+        "name": "Signal Mask",
+        "definition": "A set of signals whose delivery is currently blocked",
+        "keyPoints": [
+          "Each process (or thread) has a signal mask",
+          "Blocked signals remain pending until unblocked",
+          "Signal mask can be changed explicitly or implicitly",
+          "Attempts to block SIGKILL or SIGSTOP are ignored"
+        ],
+        "commonMistakes": [],
+        "bestPractices": []
+      },
+      "cluster": "concepts"
+    },
+    {
+      "id": "concept_signal_handler",
+      "type": "concept",
+      "label": "Signal Handler",
+      "data": {
+        "name": "Signal Handler",
+        "definition": "A user-defined function called when a signal is delivered",
+        "keyPoints": [
+          "Called with one integer argument (signal number)",
+          "Can interrupt main program flow at any time",
+          "Execution continues at point of interruption on return",
+          "Should be kept as simple as possible"
+        ],
+        "commonMistakes": [
+          "Performing complex operations in signal handlers",
+          "Using non-reentrant functions in signal handlers"
+        ],
+        "bestPractices": [
+          "Keep signal handlers simple and fast",
+          "Avoid calling functions that are not async-signal-safe",
+          "Use volatile variables if shared with main program"
+        ]
+      },
+      "cluster": "concepts"
+    },
+    {
+      "id": "concept_signal_sets",
+      "type": "concept",
+      "label": "Signal Sets",
+      "data": {
+        "name": "Signal Sets",
+        "definition": "A data structure representing multiple signals",
+        "keyPoints": [
+          "Used by various signal-related APIs",
+          "Typically implemented as a bit mask",
+          "Must be initialized with sigemptyset() or sigfillset()",
+          "Can be manipulated with sigaddset(), sigdelset(), and sigismember()"
+        ],
+        "commonMistakes": [
+          "Using memset() to initialize a signal set",
+          "Not initializing a signal set before use"
+        ],
+        "bestPractices": [
+          "Always initialize signal sets properly",
+          "Use the provided macros for manipulation"
+        ]
+      },
+      "cluster": "concepts"
+    },
+    {
+      "id": "concept_process_termination",
+      "type": "concept",
+      "label": "Process Termination",
+      "data": {
+        "name": "Process Termination",
+        "definition": "The process of ending a process's execution.",
+        "keyPoints": [
+          "Processes can terminate normally via exit(3) or _exit(2).",
+          "exit(3) calls exit handlers, flushes stdio buffers, and then calls _exit(status).",
+          "_exit(2) terminates the process without calling exit handlers or flushing stdio buffers.",
+          "As part of process termination, the kernel performs various clean-ups, such as closing open file descriptors, releasing associated file locks, closing open POSIX IPC objects, unmapping memory mappings, removing memory locks, and detaching System V shared memory segments."
+        ],
+        "commonMistakes": [
+          "Calling _exit() directly instead of exit(), which can lead to exit handlers not being called and stdio buffers not being flushed.",
+          "Not reaping zombie children, which can lead to resource leaks."
+        ],
+        "bestPractices": [
+          "Use exit(3) for normal process termination to ensure exit handlers are called and stdio buffers are flushed.",
+          "Always reap zombie children to prevent resource leaks."
+        ]
+      },
+      "cluster": "concepts"
+    },
+    {
+      "id": "concept_process_monitoring",
+      "type": "concept",
+      "label": "Process Monitoring",
+      "data": {
+        "name": "Process Monitoring",
+        "definition": "The process of monitoring the state of child processes.",
+        "keyPoints": [
+          "Parent processes can use the 'wait' family of APIs to monitor state change events in child processes, such as termination, stop, and continue.",
+          "The waitpid() system call waits for a child process to change state and returns the PID of the child whose status is being reported.",
+          "The wstatus argument in waitpid() returns a wait status value that describes the child state transition.",
+          "The wait status value distinguishes four types of events: child terminated via _exit(), child was killed by a signal, child was stopped by a signal, and child was continued by a signal.",
+          "The wait() system call is the original 'wait' API and is equivalent to waitpid(-1, &wstatus, 0).",
+          "The waitid() system call is a newer wait API that provides additional functionality, such as independently choosing which events to wait on and waiting via PID file descriptor."
+        ],
+        "commonMistakes": [
+          "Not handling the case where no children have changed state, which can lead to the program blocking indefinitely.",
+          "Not checking the return value of waitpid() or wait(), which can lead to errors being ignored."
+        ],
+        "bestPractices": [
+          "Always check the return value of waitpid() or wait() to handle errors and the case where no children have changed state.",
+          "Use the WNOHANG option in waitpid() to cause nonblocking wait if appropriate."
+        ]
+      },
+      "cluster": "concepts"
+    },
+    {
+      "id": "concept_orphans_and_zombies",
+      "type": "concept",
+      "label": "Orphans and Zombies",
+      "data": {
+        "name": "Orphans and Zombies",
+        "definition": "Orphans are processes that live longer than their parent, and zombies are processes that have terminated but have not been reaped by their parent.",
+        "keyPoints": [
+          "An orphan is a process that lives longer than its parent. Orphaned processes are adopted by init, which waits for its adopted children when they terminate.",
+          "A zombie is a process that has terminated but has not been reaped by its parent. Most process resources are recycled, but a process slot is retained, including the PID, status, and resource usage statistics.",
+          "Zombies are removed when the parent does a 'wait'.",
+          "Long-lived processes that create children must ensure that zombies are reaped to prevent resource leaks."
+        ],
+        "commonMistakes": [
+          "Not reaping zombie children, which can lead to resource leaks.",
+          "Assuming that zombies can be killed by signals, which is not true."
+        ],
+        "bestPractices": [
+          "Always reap zombie children to prevent resource leaks.",
+          "Understand that zombies cannot be killed by signals, including SIGKILL."
+        ]
+      },
+      "cluster": "concepts"
+    },
+    {
+      "id": "concept_sigchld_signal",
+      "type": "concept",
+      "label": "SIGCHLD Signal",
+      "data": {
+        "name": "SIGCHLD Signal",
+        "definition": "A signal generated for a parent when a child terminates, stops, or continues.",
+        "keyPoints": [
+          "SIGCHLD is generated for a parent when a child terminates, stops, or continues.",
+          "SIGCHLD is ignored by default.",
+          "Catching SIGCHLD allows us to be asynchronously notified of a child's termination, which can be more convenient than synchronous or nonblocking waitpid() calls.",
+          "Within a SIGCHLD handler, we 'wait' to reap zombie children.",
+          "To prevent SIGCHLD from being generated for stopped or continued children, specify SA_NOCLDSTOP in sa_flags when establishing the SIGCHLD handler with sigaction()."
+        ],
+        "commonMistakes": [
+          "Not handling SIGCHLD, which can lead to zombie children not being reaped.",
+          "Not specifying SA_NOCLDSTOP in sa_flags when establishing the SIGCHLD handler, which can lead to unnecessary SIGCHLD signals being generated for stopped or continued children."
+        ],
+        "bestPractices": [
+          "Catch SIGCHLD to be asynchronously notified of a child's termination.",
+          "Specify SA_NOCLDSTOP in sa_flags when establishing the SIGCHLD handler to prevent unnecessary SIGCHLD signals being generated for stopped or continued children."
+        ]
+      },
+      "cluster": "concepts"
+    },
+    {
+      "id": "concept_process_lifecycle",
+      "type": "concept",
+      "label": "Process Lifecycle",
+      "data": {
+        "name": "Process Lifecycle",
+        "definition": "The sequence of states that a process goes through from creation to termination.",
+        "keyPoints": [
+          "A process is created using the fork() system call, which creates a new process by duplicating the calling process.",
+          "A process can terminate normally via exit(3) or _exit(2), or abnormally via a signal.",
+          "Parent processes can monitor the state of their child processes using the 'wait' family of APIs.",
+          "Orphaned processes are adopted by init, and zombies are processes that have terminated but have not been reaped by their parent.",
+          "SIGCHLD is a signal generated for a parent when a child terminates, stops, or continues."
+        ],
+        "commonMistakes": [
+          "Not reaping zombie children, which can lead to resource leaks.",
+          "Not handling SIGCHLD, which can lead to zombie children not being reaped.",
+          "Not checking the return value of waitpid() or wait(), which can lead to errors being ignored."
+        ],
+        "bestPractices": [
+          "Always reap zombie children to prevent resource leaks.",
+          "Catch SIGCHLD to be asynchronously notified of a child's termination.",
+          "Always check the return value of waitpid() or wait() to handle errors and the case where no children have changed state."
+        ]
+      },
+      "cluster": "concepts"
+    },
+    {
+      "id": "type_pid_t",
+      "type": "datatype",
+      "label": "pid_t",
+      "data": {
+        "name": "pid_t",
+        "underlying": "int",
+        "purpose": "Process ID",
+        "header": "<sys/types.h>"
+      },
+      "cluster": "types"
+    },
+    {
+      "id": "type_ssize_t",
+      "type": "datatype",
+      "label": "ssize_t",
+      "data": {
+        "name": "ssize_t",
+        "underlying": "long",
+        "purpose": "Signed size type for I/O operations",
+        "header": "<sys/types.h>"
+      },
+      "cluster": "types"
+    },
+    {
+      "id": "type_size_t",
+      "type": "datatype",
+      "label": "size_t",
+      "data": {
+        "name": "size_t",
+        "underlying": "unsigned long",
+        "purpose": "Unsigned size type",
+        "header": "<stddef.h>"
+      },
+      "cluster": "types"
+    },
+    {
+      "id": "type_sigset_t",
+      "type": "datatype",
+      "label": "sigset_t",
+      "data": {
+        "name": "sigset_t",
+        "underlying": "Bit mask (typically)",
+        "purpose": "Represents a set of signals",
+        "header": "<signal.h>"
+      },
+      "cluster": "types"
+    },
+    {
+      "id": "type_struct sigaction",
+      "type": "datatype",
+      "label": "struct sigaction",
+      "data": {
+        "name": "struct sigaction",
+        "underlying": "Structure",
+        "purpose": "Describes a signal's disposition",
+        "header": "<signal.h>",
+        "fields": [
+          {
+            "name": "sa_handler",
+            "type": "void (*)(int)",
+            "description": "Signal handler function or SIG_IGN or SIG_DFL"
+          },
+          {
+            "name": "sa_mask",
+            "type": "sigset_t",
+            "description": "Signals to block while handler is executing"
+          },
+          {
+            "name": "sa_flags",
+            "type": "int",
+            "description": "Bit mask of flags affecting handler invocation"
+          },
+          {
+            "name": "sa_restorer",
+            "type": "void (*)(void)",
+            "description": "Not for application use (internal)"
+          }
+        ]
+      },
+      "cluster": "types"
+    },
+    {
+      "id": "type_idtype_t",
+      "type": "datatype",
+      "label": "idtype_t",
+      "data": {
+        "name": "idtype_t",
+        "underlying": "int",
+        "purpose": "ID type",
+        "header": "<sys/types.h>",
+        "description": "A type used to specify the type of the ID in waitid()."
+      },
+      "cluster": "types"
+    },
+    {
+      "id": "type_id_t",
+      "type": "datatype",
+      "label": "id_t",
+      "data": {
+        "name": "id_t",
+        "underlying": "int",
+        "purpose": "ID",
+        "header": "<sys/types.h>",
+        "description": "A type used to represent an ID in waitid()."
+      },
+      "cluster": "types"
+    },
+    {
+      "id": "type_siginfo_t",
+      "type": "datatype",
+      "label": "siginfo_t",
+      "data": {
+        "name": "siginfo_t",
+        "underlying": "struct",
+        "purpose": "Signal information",
+        "header": "<signal.h>",
+        "description": "A structure used to pass information about a signal."
+      },
+      "cluster": "types"
+    },
+    {
+      "id": "type_sigaction",
+      "type": "datatype",
+      "label": "sigaction",
+      "data": {
+        "name": "sigaction",
+        "underlying": "struct",
+        "purpose": "Signal action",
+        "header": "<signal.h>",
+        "description": "A structure used to specify the action to be taken when a signal is delivered."
+      },
+      "cluster": "types"
+    },
+    {
+      "id": "errno_ENOENT",
+      "type": "errno",
+      "label": "ENOENT",
+      "data": {
+        "name": "ENOENT",
+        "number": 2,
+        "meaning": "No such file or directory",
+        "commonCauses": [
+          "The specified file does not exist",
+          "The specified directory does not exist"
+        ]
+      },
+      "cluster": "errors"
+    },
+    {
+      "id": "errno_EACCES",
+      "type": "errno",
+      "label": "EACCES",
+      "data": {
+        "name": "EACCES",
+        "number": 13,
+        "meaning": "Permission denied",
+        "commonCauses": [
+          "The user does not have permission to access the file",
+          "The file does not exist and the user does not have permission to create it"
+        ]
+      },
+      "cluster": "errors"
+    },
+    {
+      "id": "errno_EBADF",
+      "type": "errno",
+      "label": "EBADF",
+      "data": {
+        "name": "EBADF",
+        "number": 9,
+        "meaning": "Bad file descriptor",
+        "commonCauses": [
+          "The file descriptor is not open",
+          "The file descriptor is not valid for the operation"
+        ]
+      },
+      "cluster": "errors"
+    },
+    {
+      "id": "errno_EINTR",
+      "type": "errno",
+      "label": "EINTR",
+      "data": {
+        "name": "EINTR",
+        "number": 4,
+        "meaning": "Interrupted function call",
+        "commonCauses": [
+          "The system call was interrupted by a signal",
+          "The system call was interrupted by a system call that was interrupted by a signal"
+        ]
+      },
+      "cluster": "errors"
+    },
+    {
+      "id": "errno_EINVAL",
+      "type": "errno",
+      "label": "EINVAL",
+      "data": {
+        "name": "EINVAL",
+        "number": 22,
+        "meaning": "Invalid argument",
+        "commonCauses": [
+          "Attempt to change disposition of SIGKILL or SIGSTOP",
+          "Invalid signal number passed to sigaction()"
+        ]
+      },
+      "cluster": "errors"
+    },
+    {
+      "id": "errno_ECHILD",
+      "type": "errno",
+      "label": "ECHILD",
+      "data": {
+        "name": "ECHILD",
+        "number": 10,
+        "meaning": "No child processes",
+        "commonCauses": [
+          "The calling process has no existing child processes for waitpid() or wait() to wait for.",
+          "The specified PID does not match any existing child process."
+        ]
+      },
+      "cluster": "errors"
+    }
+  ],
+  "edges": [
+    {
+      "source": "syscall_open",
+      "target": "syscall_close",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_open",
+      "target": "syscall_read",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_open",
+      "target": "syscall_write",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_open",
+      "target": "errno_ENOENT",
+      "type": "can_return",
+      "weight": 0.5
+    },
+    {
+      "source": "syscall_open",
+      "target": "errno_EACCES",
+      "type": "can_return",
+      "weight": 0.5
+    },
+    {
+      "source": "syscall_open",
+      "target": "errno_EBADF",
+      "type": "can_return",
+      "weight": 0.5
+    },
+    {
+      "source": "syscall_open",
+      "target": "errno_EINTR",
+      "type": "can_return",
+      "weight": 0.5
+    },
+    {
+      "source": "syscall_read",
+      "target": "syscall_open",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_read",
+      "target": "syscall_write",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_read",
+      "target": "syscall_close",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_read",
+      "target": "errno_EINTR",
+      "type": "can_return",
+      "weight": 0.5
+    },
+    {
+      "source": "syscall_read",
+      "target": "errno_EBADF",
+      "type": "can_return",
+      "weight": 0.5
+    },
+    {
+      "source": "syscall_write",
+      "target": "syscall_open",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_write",
+      "target": "syscall_read",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_write",
+      "target": "syscall_close",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_write",
+      "target": "errno_EBADF",
+      "type": "can_return",
+      "weight": 0.5
+    },
+    {
+      "source": "syscall_close",
+      "target": "syscall_open",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_close",
+      "target": "syscall_read",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_close",
+      "target": "syscall_write",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_close",
+      "target": "errno_EBADF",
+      "type": "can_return",
+      "weight": 0.5
+    },
+    {
+      "source": "syscall_strerror",
+      "target": "syscall_perror",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_fork",
+      "target": "syscall_execve",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_fork",
+      "target": "syscall_waitpid",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_execve",
+      "target": "syscall_fork",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_execve",
+      "target": "syscall_waitpid",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_waitpid",
+      "target": "syscall_fork",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_waitpid",
+      "target": "syscall_execve",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_waitpid",
+      "target": "syscall_wait",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_waitpid",
+      "target": "syscall_waitid",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_waitpid",
+      "target": "errno_ECHILD",
+      "type": "can_return",
+      "weight": 0.5
+    },
+    {
+      "source": "syscall_sigaction",
+      "target": "syscall_pause",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_sigaction",
+      "target": "errno_EINVAL",
+      "type": "can_return",
+      "weight": 0.5
+    },
+    {
+      "source": "syscall_pause",
+      "target": "errno_EINTR",
+      "type": "can_return",
+      "weight": 0.5
+    },
+    {
+      "source": "syscall_exit",
+      "target": "syscall__exit",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall__exit",
+      "target": "syscall_exit",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_wait",
+      "target": "syscall_waitpid",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_wait",
+      "target": "syscall_waitid",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_waitid",
+      "target": "syscall_waitpid",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_waitid",
+      "target": "syscall_wait",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_getpid",
+      "target": "syscall_getppid",
+      "type": "related",
+      "weight": 1
+    },
+    {
+      "source": "syscall_getppid",
+      "target": "syscall_getpid",
+      "type": "related",
+      "weight": 1
+    }
+  ],
+  "clusters": {
+    "file_io": {
+      "label": "File I/O",
+      "color": "#21409a",
+      "syscalls": [
+        "open",
+        "read",
+        "write",
+        "close"
+      ]
+    },
+    "process": {
+      "label": "Process Management",
+      "color": "#be1e2d",
+      "syscalls": [
+        "fork",
+        "execve",
+        "waitpid",
+        "exit",
+        "_exit",
+        "wait",
+        "getpid",
+        "getppid"
+      ]
+    },
+    "signals": {
+      "label": "Signals",
+      "color": "#f9a825",
+      "syscalls": [
+        "sigaction",
+        "pause"
+      ]
+    },
+    "memory": {
+      "label": "Memory",
+      "color": "#4caf50",
+      "syscalls": []
+    },
+    "ipc": {
+      "label": "IPC",
+      "color": "#9c27b0",
+      "syscalls": []
+    }
+  },
+  "metadata": {
+    "createdAt": "2026-01-05T02:54:44.924Z",
+    "version": "2.0"
+  }
+}

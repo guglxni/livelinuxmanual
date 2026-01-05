@@ -3,12 +3,31 @@ import { Layout } from '../components/Layout';
 import { Sidebar } from '../components/Sidebar';
 import { LessonContent } from '../components/LessonContent';
 import { ChatPanel } from '../components/ChatPanel';
+import { ProgressDashboard } from '../components/ProgressDashboard';
+import { markSectionComplete, updateSectionTime, getProgress } from '../lib/progress';
 import curriculum from '../../content/linux-curriculum.json';
 
 export default function Home() {
   const [activeChapter, setActiveChapter] = useState(1);
   const [activeSection, setActiveSection] = useState('1.1');
   const [showChat, setShowChat] = useState(true);
+  const [completedSections, setCompletedSections] = useState<string[]>([]);
+
+  // Track time spent on section
+  useEffect(() => {
+    const interval = setInterval(() => {
+      updateSectionTime(activeSection, 10); // Update every 10 seconds
+    }, 10000);
+    
+    return () => clearInterval(interval);
+  }, [activeSection]);
+
+  // Load completed sections
+  useEffect(() => {
+    const progress = getProgress();
+    const completed = Object.keys(progress.sections).filter(id => progress.sections[id].completed);
+    setCompletedSections(completed);
+  }, []);
 
   const chapters = curriculum.chapters.map((ch) => ({
     id: ch.id,
@@ -24,13 +43,18 @@ export default function Home() {
     setActiveSection(sectionId);
   };
 
+  const handleMarkComplete = () => {
+    markSectionComplete(activeSection);
+    setCompletedSections(prev => [...prev, activeSection]);
+  };
+
   // Build context for chat from current section
   const chatContext = currentSection
     ? `Current topic: ${currentChapter?.title} - ${currentSection.title}. Key concepts: ${currentSection.topics?.join(', ')}`
     : '';
 
   return (
-    <Layout>
+    <Layout title="Learn">
       <div className="flex">
         {/* Sidebar */}
         <Sidebar
@@ -43,12 +67,38 @@ export default function Home() {
         {/* Main content */}
         <div className="flex-1 flex">
           <div className="flex-1 p-8 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 73px)' }}>
+            {/* Progress bar at top */}
+            <div className="mb-6">
+              <ProgressDashboard compact />
+            </div>
+            
             {currentChapter && currentSection && (
-              <LessonContent
-                chapterId={currentChapter.id}
-                chapterTitle={currentChapter.title}
-                section={currentSection as any}
-              />
+              <>
+                <LessonContent
+                  chapterId={currentChapter.id}
+                  chapterTitle={currentChapter.title}
+                  section={currentSection as any}
+                />
+                
+                {/* Mark complete button */}
+                <div className="mt-8 pt-4 border-t-2 border-bauhaus-gray">
+                  {!completedSections.includes(activeSection) ? (
+                    <button
+                      onClick={handleMarkComplete}
+                      className="px-6 py-3 bg-bauhaus-blue text-white font-semibold uppercase tracking-wider hover:bg-bauhaus-black transition-colors"
+                    >
+                      Mark Section Complete
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2 text-green-600">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                      <span className="font-semibold">Section Completed</span>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </div>
 
